@@ -8,11 +8,8 @@ const string DB_NAME = "OrderSystem";
 const string COLL_NAME = "PurchaseOrders";
 
 var uri = GetMongoDbUri();
-
 var client = new MongoClient(uri);
-
 var collection = client.GetDatabase(DB_NAME).GetCollection<PurchaseOrder>(COLL_NAME);
-
 
 var po = new PurchaseOrder
 {
@@ -24,18 +21,30 @@ var po = new PurchaseOrder
     ]
 };
 
-await collection.InsertOneAsync(po);
+await InsertPurchaseOrder(collection, po);
 
-Console.WriteLine($"Inserted ID: {po.Id}");
+await UpdatePurchaseOrder(collection, po);
 
-var filter = Builders<PurchaseOrder>.Filter
-    .Eq(p => p.Id, po.Id);
+static async Task<ObjectId> InsertPurchaseOrder(IMongoCollection<PurchaseOrder> collection, PurchaseOrder po)
+{
+    await collection.InsertOneAsync(po);
+    return po.Id;
+}
 
-// TODO: Replace with actual logic
-var update = Builders<PurchaseOrder>.Update
-    .Set("LineItems.$[].QuantityToRun", 79);
+async Task<bool> UpdatePurchaseOrder(IMongoCollection<PurchaseOrder> collection, PurchaseOrder po)
+{
 
-await collection.UpdateOneAsync(filter, update);
+    var filter = Builders<PurchaseOrder>.Filter
+        .Eq(p => p.Id, po.Id);
+
+    // TODO: Replace with actual logic
+    var update = Builders<PurchaseOrder>.Update
+        .Set("LineItems.$[].QuantityToRun", 79);
+
+    var result = await collection.UpdateOneAsync(filter, update);
+
+    return result.IsAcknowledged;
+}
 
 static string GetMongoDbUri()
 {
