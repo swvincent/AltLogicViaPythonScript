@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
 
 const string DB_NAME = "OrderSystem";
 const string COLL_NAME = "PurchaseOrders";
@@ -25,6 +26,16 @@ var po = new PurchaseOrder
 
 await collection.InsertOneAsync(po);
 
+Console.WriteLine($"Inserted ID: {po.Id}");
+
+var filter = Builders<PurchaseOrder>.Filter
+    .Eq(p => p.Id, po.Id);
+
+// TODO: Replace with actual logic
+var update = Builders<PurchaseOrder>.Update
+    .Set("LineItems.$[].QuantityToRun", 79);
+
+await collection.UpdateOneAsync(filter, update);
 
 static string GetMongoDbUri()
 {
