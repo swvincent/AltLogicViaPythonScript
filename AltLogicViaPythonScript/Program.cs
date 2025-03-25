@@ -11,19 +11,29 @@ var uri = GetMongoDbUri();
 var client = new MongoClient(uri);
 var collection = client.GetDatabase(DB_NAME).GetCollection<PurchaseOrder>(COLL_NAME);
 
-var po = new PurchaseOrder
+var pos = new List<PurchaseOrder>()
 {
-    CustomerPoNo = "ABC123",
-    LineItems =
-    [
-        new LineItem() {LineNo = 1, Description = "Cogs", QuantityOrdered = 10},
-        new LineItem() {LineNo = 2, Description = "Widgets", QuantityOrdered = 20}
-    ]
+    new() {CustomerPoNo = "ABC123", OrderTotal = 100 },
+    new() {CustomerPoNo = "DEF456", OrderTotal = 200 },
+    new() {CustomerPoNo = "GHI789", OrderTotal = 50 }
 };
 
-await InsertPurchaseOrder(collection, po);
+//pos.ForEach(async p => await InsertAndUpdateOrder(collection, p));
 
-await UpdatePurchaseOrder(collection, po);
+//foreach (var po in pos)
+//{
+//    await InsertPurchaseOrder(collection, po);
+//    await UpdatePurchaseOrder(collection, po);
+//}
+
+var tasks = pos.Select(po => InsertAndUpdateOrder(collection, po));
+await Task.WhenAll(tasks);
+
+static async Task InsertAndUpdateOrder(IMongoCollection<PurchaseOrder> collection, PurchaseOrder po)
+{
+    await InsertPurchaseOrder(collection, po);
+    await UpdatePurchaseOrder(collection, po);
+}
 
 static async Task<ObjectId> InsertPurchaseOrder(IMongoCollection<PurchaseOrder> collection, PurchaseOrder po)
 {
@@ -31,7 +41,7 @@ static async Task<ObjectId> InsertPurchaseOrder(IMongoCollection<PurchaseOrder> 
     return po.Id;
 }
 
-async Task<bool> UpdatePurchaseOrder(IMongoCollection<PurchaseOrder> collection, PurchaseOrder po)
+static async Task<bool> UpdatePurchaseOrder(IMongoCollection<PurchaseOrder> collection, PurchaseOrder po)
 {
 
     var filter = Builders<PurchaseOrder>.Filter
@@ -39,7 +49,7 @@ async Task<bool> UpdatePurchaseOrder(IMongoCollection<PurchaseOrder> collection,
 
     // TODO: Replace with actual logic
     var update = Builders<PurchaseOrder>.Update
-        .Set("LineItems.$[].QuantityToRun", 79);
+        .Set("AdjustedOrderTotal", 123);
 
     var result = await collection.UpdateOneAsync(filter, update);
 

@@ -8,7 +8,8 @@ namespace AltLogicViaPythonScript.Models
         [BsonId]
         public ObjectId Id { get; set; }
         public required string CustomerPoNo { get; set; }
-        public required List<LineItem> LineItems { get; set; }
+        public decimal OrderTotal { get; set; }
+        public decimal AdjustedOrderTotal { get; set; }
 
         public override string ToString() => $"PO# {CustomerPoNo}";
     }
