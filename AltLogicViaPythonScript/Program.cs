@@ -18,21 +18,13 @@ var pos = new List<PurchaseOrder>()
     new() {CustomerPoNo = "GHI789", OrderTotal = 50 }
 };
 
-//pos.ForEach(async p => await InsertAndUpdateOrder(collection, p));
-
-//foreach (var po in pos)
-//{
-//    await InsertPurchaseOrder(collection, po);
-//    await UpdatePurchaseOrder(collection, po);
-//}
-
 var tasks = pos.Select(po => InsertAndUpdateOrder(collection, po));
 await Task.WhenAll(tasks);
 
 static async Task InsertAndUpdateOrder(IMongoCollection<PurchaseOrder> collection, PurchaseOrder po)
 {
     await InsertPurchaseOrder(collection, po);
-    await UpdatePurchaseOrder(collection, po);
+    await SetAdjustedTotal(collection, po);
 }
 
 static async Task<ObjectId> InsertPurchaseOrder(IMongoCollection<PurchaseOrder> collection, PurchaseOrder po)
@@ -41,15 +33,16 @@ static async Task<ObjectId> InsertPurchaseOrder(IMongoCollection<PurchaseOrder> 
     return po.Id;
 }
 
-static async Task<bool> UpdatePurchaseOrder(IMongoCollection<PurchaseOrder> collection, PurchaseOrder po)
+static async Task<bool> SetAdjustedTotal(IMongoCollection<PurchaseOrder> collection, PurchaseOrder po)
 {
 
     var filter = Builders<PurchaseOrder>.Filter
         .Eq(p => p.Id, po.Id);
 
-    // TODO: Replace with actual logic
-    var update = Builders<PurchaseOrder>.Update
-        .Set("AdjustedOrderTotal", 123);
+    var pipeline = new EmptyPipelineDefinition<PurchaseOrder>()
+        .AppendStage<PurchaseOrder, PurchaseOrder, PurchaseOrder>("{ $set: {AdjustedOrderTotal: '$OrderTotal'} }");
+
+    var update = Builders<PurchaseOrder>.Update.Pipeline(pipeline);
 
     var result = await collection.UpdateOneAsync(filter, update);
 
