@@ -1,26 +1,40 @@
-from pymongo import MongoClient
+#! /usr/bin/env python3
+
+"""
+Custom Process
+
+Arguments:
+    1 - connection string
+    2 - purchase order ID
+"""
 
 import pymongo
+from pymongo import MongoClient
 from bson.objectid import ObjectId
+import sys
 
-client = pymongo.MongoClient("mongodb://localhost:27018/")
-db = client["OrderSystem"]
-col = db["PurchaseOrders"]
+def main(uri, id):
+    client = pymongo.MongoClient(uri)
+    db = client["OrderSystem"]
+    col = db["PurchaseOrders"]
 
-myFilter = { '_id' : ObjectId('67e35154716e79e09821e062')}
+    myFilter = { '_id' : ObjectId(id)}
 
-# Apply 5% discount
-pipeline = [
-   {
-       "$set": {
-           "AdjustedOrderTotal": {
-               "$multiply": [ 0.95, "$OrderTotal" ]
+    # Apply 5% discount
+    pipeline = [
+       {
+           "$set": {
+               "AdjustedOrderTotal": {
+                   "$multiply": [ 0.94, "$OrderTotal" ]
+               }
            }
-       }
-   },
-]
+       },
+    ]
 
-results = col.update_one(myFilter, pipeline)
+    results = col.update_one(myFilter, pipeline)
 
-# TODO: Return this?
-print(results.acknowledged)
+    # TODO: Return this?
+    print(results.acknowledged)
+
+if __name__ == '__main__':
+    main(sys.argv[1], sys.argv[2])
