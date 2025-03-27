@@ -3,12 +3,12 @@ using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
+using Python.Runtime;
 
 const string DB_NAME = "OrderSystem";
 const string COLL_NAME = "PurchaseOrders";
 
-var uri = GetMongoDbUri();
-var client = new MongoClient(uri);
+var client = new MongoClient(GetMongoDbUri());
 var collection = client.GetDatabase(DB_NAME).GetCollection<PurchaseOrder>(COLL_NAME);
 
 var pos = new List<PurchaseOrder>()
@@ -28,7 +28,7 @@ static async Task InsertAndUpdateOrder(IMongoCollection<PurchaseOrder> collectio
     if (!po.CustomProcessLogic)
         await StandardProcess(collection, po);
     else
-        await CustomProcess(collection, po);
+        CustomProcess(collection, po);
 }
 
 static async Task<ObjectId> InsertPurchaseOrder(IMongoCollection<PurchaseOrder> collection, PurchaseOrder po)
@@ -42,6 +42,7 @@ static async Task<bool> StandardProcess(IMongoCollection<PurchaseOrder> collecti
     var filter = Builders<PurchaseOrder>.Filter
         .Eq(p => p.Id, po.Id);
 
+    // Standard process is to copy order total to adjusted order total
     var pipeline = new EmptyPipelineDefinition<PurchaseOrder>()
         .AppendStage<PurchaseOrder, PurchaseOrder, PurchaseOrder>("{ $set: {AdjustedOrderTotal: '$OrderTotal'} }");
 
@@ -52,10 +53,22 @@ static async Task<bool> StandardProcess(IMongoCollection<PurchaseOrder> collecti
     return result.IsAcknowledged;
 }
 
-static async Task<bool> CustomProcess(IMongoCollection < PurchaseOrder > collection, PurchaseOrder po)
+static bool CustomProcess(IMongoCollection < PurchaseOrder > collection, PurchaseOrder po)
 {
-    //TODO: Custom process logic here
-    await Task.CompletedTask;
+    //TODO: Handle python dll location better
+    Runtime.PythonDLL = "C:\\Users\\scott\\AppData\\Local\\Programs\\Python\\Python313\\python313.dll";
+
+    PythonEngine.Initialize();
+    PythonEngine.BeginAllowThreads();                   // Program hangs w/o this after executing Python script
+
+    using (Py.GIL())
+    {
+        dynamic module = Py.Import("CustomProcess");
+        // TODO: Get back status from python script
+        // TODO: Error handling for python script
+        module.customProcess(GetMongoDbUri(), po.Id.ToString());
+    }
+
     return true;
 }
 

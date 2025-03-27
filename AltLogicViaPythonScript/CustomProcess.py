@@ -13,12 +13,12 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 import sys
 
-def main(uri, id):
+def customProcess(uri, objId):
     client = pymongo.MongoClient(uri)
     db = client["OrderSystem"]
     col = db["PurchaseOrders"]
 
-    myFilter = { '_id' : ObjectId(id)}
+    myFilter = { '_id' : ObjectId(objId)}
 
     # Apply 5% discount
     pipeline = [
@@ -34,7 +34,7 @@ def main(uri, id):
     results = col.update_one(myFilter, pipeline)
 
     # TODO: Return this?
-    print(results.acknowledged)
+    #print(results.acknowledged)
 
 if __name__ == '__main__':
-    main(sys.argv[1], sys.argv[2])
+    customProcess(sys.argv[1], sys.argv[2])
