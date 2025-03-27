@@ -11,3 +11,5 @@ Helpful:
 * https://www.mongodb.com/developer/languages/python/python-quickstart-aggregation/
 * https://www.geeksforgeeks.org/python-mongodb-update_one/
 * https://stackoverflow.com/a/16074920
+* https://stackoverflow.com/a/67442114
+* https://pythonnet.github.io/pythonnet/dotnet.html

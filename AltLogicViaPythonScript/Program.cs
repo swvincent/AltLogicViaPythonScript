@@ -61,15 +61,25 @@ static bool CustomProcess(IMongoCollection < PurchaseOrder > collection, Purchas
     PythonEngine.Initialize();
     PythonEngine.BeginAllowThreads();                   // Program hangs w/o this after executing Python script
 
-    using (Py.GIL())
+    var gil = Py.GIL();
+
+    try
     {
         dynamic module = Py.Import("CustomProcess");
-        // TODO: Get back status from python script
-        // TODO: Error handling for python script
-        module.customProcess(GetMongoDbUri(), po.Id.ToString());
+        return module.customProcess(GetMongoDbUri(), po.Id.ToString());
     }
+    catch (Exception ex)
+    {
+        Console.WriteLine(new string('-', 100));
+        Console.WriteLine($"Exception occured running custom work for PO# {po.CustomerPoNo}: {ex.Message}.");
+        Console.WriteLine(new string('-', 100));
 
-    return true;
+        return false;
+    }
+    finally
+    {
+        gil.Dispose();
+    }
 }
 
 static string GetMongoDbUri()

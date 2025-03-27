@@ -33,8 +33,7 @@ def customProcess(uri, objId):
 
     results = col.update_one(myFilter, pipeline)
 
-    # TODO: Return this?
-    #print(results.acknowledged)
+    return results.acknowledged
 
 if __name__ == '__main__':
-    customProcess(sys.argv[1], sys.argv[2])
+    print(customProcess(sys.argv[1], sys.argv[2]))
