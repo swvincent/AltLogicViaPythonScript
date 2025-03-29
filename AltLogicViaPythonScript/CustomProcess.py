@@ -25,7 +25,7 @@ def customProcess(uri, objId):
        {
            "$set": {
                "AdjustedOrderTotal": {
-                   "$multiply": [ 0.94, "$OrderTotal" ]
+                   "$multiply": [ 0.95, "$OrderTotal" ]
                }
            }
        },
